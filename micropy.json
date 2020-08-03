@@ -1,0 +1,22 @@
+{
+    "name": "brass-annealer",
+    "stubs": {
+        "esp32-micropython-1.12.0": "1.3.2"
+    },
+    "dev-packages": {
+        "micropy-cli": "*"
+    },
+    "packages": {
+        "lib": "-e ./src/lib",
+        "picoweb": "*",
+        "pycopy-uasyncio": "*",
+        "pycopy-pkg-resources": "*",
+        "pycopy-ulogging": "*",
+        "utemplate": "*",
+        "pycopy-btreedb": "*"
+    },
+    "config": {
+        "vscode": true,
+        "pylint": true
+    }
+}

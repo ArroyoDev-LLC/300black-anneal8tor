@@ -1,0 +1,7 @@
+-e ./src/lib
+picoweb
+pycopy-btreedb
+pycopy-pkg-resources
+pycopy-uasyncio
+pycopy-ulogging
+utemplate

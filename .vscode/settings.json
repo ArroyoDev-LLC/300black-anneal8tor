@@ -1,0 +1,29 @@
+{
+    "python.linting.enabled": true,
+    "python.jediEnabled": false,
+    "python.autoComplete.extraPaths": [
+        ".micropy/BradenM-micropy-stubs-9569403/frozen",
+        ".micropy/BradenM-micropy-stubs-27ee48a/frozen",
+        ".micropy/BradenM-micropy-stubs-9569403/stubs",
+        ".micropy/brass-annealer",
+        "src/lib"
+    ],
+    "python.autoComplete.typeshedPaths": [
+        ".micropy/BradenM-micropy-stubs-9569403/frozen",
+        ".micropy/BradenM-micropy-stubs-27ee48a/frozen",
+        ".micropy/BradenM-micropy-stubs-9569403/stubs",
+        ".micropy/brass-annealer",
+        "src/lib"
+    ],
+    "python.analysis.typeshedPaths": [
+        ".micropy/BradenM-micropy-stubs-9569403/frozen",
+        ".micropy/BradenM-micropy-stubs-27ee48a/frozen",
+        ".micropy/BradenM-micropy-stubs-9569403/stubs",
+        ".micropy/brass-annealer",
+        "src/lib"
+    ],
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "/home/bradenmars/Documents/projects/work/arroyodev/300black/brass-annealer/.direnv/python-3.8.3/bin/python",
+    "python.languageServer": "Microsoft",
+    "python.linting.flake8Enabled": false,
+}
