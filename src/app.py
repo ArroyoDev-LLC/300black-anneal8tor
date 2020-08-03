@@ -13,7 +13,6 @@ EN_PIN = 27
 
 
 class BlackApp(picoweb.WebApp):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.black = None

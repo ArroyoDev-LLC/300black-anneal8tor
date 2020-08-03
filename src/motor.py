@@ -22,19 +22,19 @@ class Motor:
         self._stepper.MAX_ACCEL = self.MAX_ACCEL
         self._timer = Timer(1)
         self._timer.init(freq=self.TIMER_FREQ, callback=self._do_step)
-        self.log = logging.getLogger('anneal8tor.motor')
+        self.log = logging.getLogger("anneal8tor.motor")
         self._rehydate()
 
     def _rehydate(self):
-        self.log.info('attempting to rehydrate motor...')
+        self.log.info("attempting to rehydrate motor...")
         try:
-            store = Config.get_id('motor.position')
+            store = Config.get_id("motor.position")
         except KeyError:
             return
         else:
             if any(store):
                 hydrated = store[0].value
-                self.log.info('rehydating motor position: ' + hydrated)
+                self.log.info("rehydating motor position: " + hydrated)
                 self._pos = int(hydrated)
 
     def _do_step(self, *args):
@@ -56,19 +56,18 @@ class Motor:
     @position.setter
     def position(self, value):
         try:
-            val_exists = any(Config.get_id('motor.position'))
+            val_exists = any(Config.get_id("motor.position"))
         except KeyError:
             val_exists = False
         self._pos = value
         if not val_exists:
-            Config.create(key='motor.position', value=str(value))
+            Config.create(key="motor.position", value=str(value))
             return self._pos
-        Config.update({'key': 'motor.position'}, value=str(value))
+        Config.update({"key": "motor.position"}, value=str(value))
         return self._pos
-        
-        
+
     def _step(self, direction):
-        self._stepper.set_speed(600*direction)
+        self._stepper.set_speed(600 * direction)
         time.sleep_ms(self.TIMER_DELAY)
         self._stepper.set_speed(0)
 
@@ -83,4 +82,4 @@ class Motor:
 
     def set_home(self):
         self._pos = 0
-        Config.create(key='motor.position', value=str(0))
+        Config.create(key="motor.position", value=str(0))
