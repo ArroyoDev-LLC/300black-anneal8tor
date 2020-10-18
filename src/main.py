@@ -88,6 +88,7 @@ def main():
     loop.create_task(push_status())
     loop.call_soon(get_wifi)
     loop.call_soon(lambda: loop.create_task(app.black.do_anneal()))
+    loop.call_soon(lambda: loop.create_task(app.black.calibrate_motor()))
     app.run(host="0.0.0.0", debug=True)
 
 
