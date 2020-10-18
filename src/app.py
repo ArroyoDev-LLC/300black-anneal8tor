@@ -14,13 +14,16 @@ EN_PIN = 27
 
 HALL_PIN = 33
 SWITCH_PIN = 34
+ANNIE_RELAY_PIN = 32
 
 
 def get_black():
     models.db.connect()
     models.Config.create_table(False)
     motor = Motor(DIR_PIN, STEP_PIN, EN_PIN)
-    black = Black(motor, switch_pin=SWITCH_PIN, hall_pin=HALL_PIN)
+    black = Black(
+        motor, switch_pin=SWITCH_PIN, hall_pin=HALL_PIN, relay_pin=ANNIE_RELAY_PIN
+    )
     return motor, black
 
 

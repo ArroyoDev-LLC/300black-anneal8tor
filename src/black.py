@@ -22,12 +22,13 @@ class Black:
     PAUSED = "Paused"
     ANNEAL_DELAY = 3500
 
-    def __init__(self, motor, switch_pin=34, hall_pin=33):
+    def __init__(self, motor, switch_pin=34, hall_pin=33, relay_pin=32):
         self.log = logging.getLogger("anneal8tor.black")
         self._slot_disp = 0
         self._motor = motor
         self._switch = Pin(switch_pin, Pin.IN)
         self._hall = Pin(hall_pin, Pin.IN)
+        self._relay = Pin(relay_pin, Pin.OUT, value=0)
         self._switch_count = 0
         self._switch_irq_began = None
         self._found_home_at = None
@@ -134,15 +135,19 @@ class Black:
         self._error = None
         status = self.ACTIVE if enabled else self.PAUSED
         self._status = status
-        if enabled:
-            self.move_home()
+
+    async def _switch_annie_relay(self):
+        self._relay.value(1)
+        await uasyncio.sleep_ms(250)
+        self._relay.value(0)
 
     async def do_anneal(self):
         while 1:
             if self.is_running:
                 cur_count = int(self._switch_count)
                 await self.move_by_slot(1)
-                # TRIGGER ANNIE VIA SERIAL HERE
+                await uasyncio.sleep_ms(500)
+                await self._switch_annie_relay()
                 await uasyncio.sleep_ms(self.ANNEAL_DELAY)
                 if cur_count >= self._switch_count:
                     self._status = self.ERROR
