@@ -78,38 +78,28 @@ class Black:
         self._error = None
 
     def check_hall(self):
-        if self._hall.value() == 0:
-            if self._calibrating:
-                if not self._found_home_at:
-                    self._motor.stop()
-                    self._found_home_at = time.ticks_ms()
-                    self._motor.set_home()
-                    return 50000
-                diff_rev = time.ticks_diff(time.ticks_ms(), self._found_home_at)
-                if diff_rev >= 5000:
-                    self._motor.stop()
-                    self._calibrating = False
-                    self.calc_step_value()
-                    self._found_home_at = None
-        return 25
+        if self._calibrating and self._hall.value() == 0:
+            self._calibrating = False
+            return
+        return self._hall.value() == 0
 
     async def calibrate_motor(self):
         self.log.info("starting motor calibration")
         self._status = self.CALIBRATING
         self._calibrating = True
-        self._motor.set_home()
         while self._calibrating:
-            if not self._found_home_at:
-                self._motor.move_at_speed(600)
-            else:
-                await self._motor.move_to(self._motor.position + 30)
-            delay = self.check_hall()
-            uasyncio.sleep_ms(delay)
-        self._motor.set_home()
+            self._motor.move_at_speed(150)
+            self.check_hall()
+            uasyncio.sleep_ms(1)
+        self._motor.stop()
+        self._status = self.READY
 
     def calc_step_value(self, *args):
         self._motor.stop()
-        self._slot_disp = self._motor.position / 8
+        revolve_time = time.ticks_diff(time.ticks_ms(), self._found_home_at)
+        step_time = revolve_time // 8
+        # self._slot_disp = self._motor.position / 8
+        self._slot_disp = step_time
         self.log.info("calc slot displacement: %s" % self._slot_disp)
         Config.create(key="black.slot_displacement", value=str(self._slot_disp))
         self._status = self.READY
@@ -126,7 +116,7 @@ class Black:
         await self._motor.move_to(self._motor.position + self._slot_disp * slot)
 
     async def move_home(self):
-        await self._motor.move_to(0)
+        await self.calibrate_motor()
 
     def set_power(self, enabled=False):
         self._error = None
