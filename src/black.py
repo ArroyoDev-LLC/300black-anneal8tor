@@ -3,14 +3,14 @@
 
 """300Black Anneal8tor main"""
 
+import machine
 import micropython
 import uasyncio
 import ulogging as logging
 import utime as time
 from machine import Pin
-from models import Config
 
-micropython.alloc_emergency_exception_buf(100)
+from models import Config
 
 
 class Black:
@@ -22,16 +22,19 @@ class Black:
     PAUSED = "Paused"
     ANNEAL_DELAY = 3500
 
-    def __init__(self, motor, switch_pin=34):
+    def __init__(self, motor, switch_pin=34, hall_pin=33):
         self.log = logging.getLogger("anneal8tor.black")
         self._slot_disp = 0
         self._motor = motor
         self._switch = Pin(switch_pin, Pin.IN)
+        self._hall = Pin(hall_pin, Pin.IN)
         self._switch_count = 0
         self._switch_irq_began = None
         self._switch.irq(trigger=Pin.IRQ_FALLING, handler=self._handle_switch_irq)
+        self._found_home_at = None
         self._status = self.BOOTING
         self._error = None
+        self._calibrating = False
         self._rehydate()
 
     def _rehydate(self):
@@ -42,7 +45,7 @@ class Black:
         else:
             if any(store):
                 hydrated = store[0].value
-                self._slot_disp = int(hydrated)
+                self._slot_disp = float(hydrated)
                 self._switch_count = 0
                 self.log.info("rehydrating calibrated slot displacement: " + hydrated)
                 self._status = self.READY
@@ -75,20 +78,42 @@ class Black:
     def clear_error(self):
         self._error = None
 
-    def calibrate_motor(self):
+    def check_hall(self):
+        if self._hall.value() == 0:
+            if self._calibrating:
+                if not self._found_home_at:
+                    self._motor.stop()
+                    self._found_home_at = time.ticks_ms()
+                    self._motor.set_home()
+                    return 50000
+                diff_rev = time.ticks_diff(time.ticks_ms(), self._found_home_at)
+                if diff_rev >= 5000:
+                    self._motor.stop()
+                    self._calibrating = False
+                    self.calc_step_value()
+                    self._found_home_at = None
+        return 25
+
+    async def calibrate_motor(self):
         self.log.info("starting motor calibration")
         self._status = self.CALIBRATING
-        calibrated = False
-        while not calibrated:
-            self._motor.move_to(self._motor.position + 1)
-            if self._switch_count >= 1:
-                self.log.info("motor position found: %s" % self._motor.position)
-                self._slot_disp = self._motor.position
-                Config.create(key="black.slot_displacement", value=str(self._slot_disp))
-                self._switch_count = 0
-                self._motor.set_home()
-                self._status = self.READY
-                calibrated = True
+        self._calibrating = True
+        self._motor.set_home()
+        while self._calibrating:
+            if not self._found_home_at:
+                self._motor.move_at_speed(600)
+            else:
+                await self._motor.move_to(self._motor.position + 30)
+            delay = self.check_hall()
+            uasyncio.sleep_ms(delay)
+        self._motor.set_home()
+
+    def calc_step_value(self, *args):
+        self._motor.stop()
+        self._slot_disp = self._motor.position / 8
+        self.log.info("calc slot displacement: %s" % self._slot_disp)
+        Config.create(key="black.slot_displacement", value=str(self._slot_disp))
+        self._status = self.READY
 
     def _handle_switch_irq(self, *args):
         if not self._switch_irq_began:
