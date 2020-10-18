@@ -30,7 +30,6 @@ class Black:
         self._hall = Pin(hall_pin, Pin.IN)
         self._switch_count = 0
         self._switch_irq_began = None
-        self._switch.irq(trigger=Pin.IRQ_FALLING, handler=self._handle_switch_irq)
         self._found_home_at = None
         self._status = self.BOOTING
         self._error = None
@@ -123,11 +122,11 @@ class Black:
         if diff_s > 500:
             self._inc_switch_count()
 
-    def move_by_slot(self, slot=1):
-        self._motor.move_to(self._motor.position + self._slot_disp * slot)
+    async def move_by_slot(self, slot=1):
+        await self._motor.move_to(self._motor.position + self._slot_disp * slot)
 
-    def move_home(self):
-        return self._motor.move_to(0)
+    async def move_home(self):
+        await self._motor.move_to(0)
 
     def set_power(self, enabled=False):
         self._error = None
@@ -140,7 +139,7 @@ class Black:
         while 1:
             if self.is_running:
                 cur_count = int(self._switch_count)
-                self.move_by_slot(1)
+                await self.move_by_slot(1)
                 # TRIGGER ANNIE VIA SERIAL HERE
                 await uasyncio.sleep_ms(self.ANNEAL_DELAY)
                 if cur_count >= self._switch_count:
