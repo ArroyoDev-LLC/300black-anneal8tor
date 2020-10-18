@@ -74,7 +74,13 @@ class Motor:
         uasyncio.sleep_ms(delay)
         self._stepper.set_speed(0)
 
-    def move_to(self, pos):
+    def move_at_speed(self, speed, direction=-1):
+        self._stepper.set_speed(speed * direction)
+
+    def stop(self):
+        self._stepper.set_speed(0)
+        self._stepper.set_off()
+
     async def move_to(self, pos, delay=None):
         delay = delay or self.TIMER_DELAY
         disp = self._pos - pos
