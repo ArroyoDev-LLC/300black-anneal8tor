@@ -2,11 +2,13 @@
 
 """300Black Motor"""
 
+import uasyncio
 import ulogging as logging
 import utime as time
 from machine import Timer
-from models import Config
 from nemastepper import Stepper
+
+from models import Config
 
 
 class Motor:
@@ -66,18 +68,21 @@ class Motor:
         Config.update({"key": "motor.position"}, value=str(value))
         return self._pos
 
-    def _step(self, direction):
-        self._stepper.set_speed(600 * direction)
-        time.sleep_ms(self.TIMER_DELAY)
+    async def _step(self, direction, delay=None):
+        delay = delay or self.TIMER_DELAY
+        self._stepper.set_speed(1000 * direction)
+        uasyncio.sleep_ms(delay)
         self._stepper.set_speed(0)
 
     def move_to(self, pos):
+    async def move_to(self, pos, delay=None):
+        delay = delay or self.TIMER_DELAY
         disp = self._pos - pos
         _dir = 1
-        if disp >= 0:
+        if disp <= 0:
             _dir = -1
         for i in range(abs(disp)):
-            self._step(_dir)
+            await self._step(_dir, delay)
         self.position = pos
 
     def set_home(self):
