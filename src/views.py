@@ -4,7 +4,9 @@
 
 import machine
 import picoweb
+import uasyncio
 import ulogging as logging
+
 from app import app
 from models import Config
 
@@ -47,12 +49,13 @@ def events(req, resp):
 
 @app.route("/move_slot")
 def move_slot(req, resp):
+    loop = uasyncio.get_event_loop()
     req.parse_qs()
     step = int(req.form["step"])
     if step == 0:
-        app.black.move_home()
+        loop.call_soon(lambda: loop.create_task(app.black.move_home()))
     else:
-        app.black.move_by_slot(step)
+        loop.call_soon(lambda: loop.create_task(app.black.move_by_slot(step)))
     yield from json_response(resp, position=app.black.motor.position)
 
 
@@ -66,7 +69,8 @@ def set_pos(req, resp):
 
 @app.route("/calibrate")
 def calibrate(req, resp):
-    app.black.calibrate_motor()
+    loop = uasyncio.get_event_loop()
+    loop.create_task(app.black.calibrate_motor())
     yield from json_response(resp, position=app.black.motor.position)
 
 
