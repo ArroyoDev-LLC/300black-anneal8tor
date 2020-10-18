@@ -12,7 +12,7 @@ from models import Config
 
 
 class Motor:
-    MAX_ACCEL = 10000
+    MAX_ACCEL = 1000
     TIMER_FREQ = 10000
     TIMER_DELAY = 5
 
@@ -37,7 +37,7 @@ class Motor:
             if any(store):
                 hydrated = store[0].value
                 self.log.info("rehydating motor position: " + hydrated)
-                self._pos = int(hydrated)
+                self._pos = float(hydrated)
 
     def _do_step(self, *args):
         self._stepper.do_step()
@@ -70,12 +70,19 @@ class Motor:
 
     async def _step(self, direction, delay=None):
         delay = delay or self.TIMER_DELAY
-        self._stepper.set_speed(1000 * direction)
-        uasyncio.sleep_ms(delay)
-        self._stepper.set_speed(0)
+        _speed = 1000 * direction
+        cur_pos = self._stepper.count
+        self._stepper.set_speed(_speed)
+        uasyncio.sleep_ms(1000)
+        self._stepper.set_speed(_speed * -1)
 
-    def move_at_speed(self, speed, direction=-1):
+    def move_at_speed(self, speed, direction=1):
         self._stepper.set_speed(speed * direction)
+
+    def move_for(self, delta, speed=300, direction=-1):
+        self._stepper.set_speed(speed * direction)
+        time.sleep_ms(delta)
+        self._stepper.set_speed(0)
 
     def stop(self):
         self._stepper.set_speed(0)
@@ -89,6 +96,7 @@ class Motor:
             _dir = -1
         for i in range(abs(disp)):
             await self._step(_dir, delay)
+        self._stepper.set_speed(0)
         self.position = pos
 
     def set_home(self):
