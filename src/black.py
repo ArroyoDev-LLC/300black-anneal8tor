@@ -113,7 +113,19 @@ class Black:
             self._inc_switch_count()
 
     async def move_by_slot(self, slot=1):
-        await self._motor.move_to(self._motor.position + self._slot_disp * slot)
+        direct = 1
+        if slot >= 1:
+            direct = -1
+
+        while self.check_hall():
+            self._motor.move_at_speed(500, direction=direct)
+            await uasyncio.sleep_ms(50)
+
+        while not self.check_hall():
+            self._motor.move_at_speed(500, direction=direct)
+            await uasyncio.sleep_ms(50)
+
+        self._motor.stop()
 
     async def move_home(self):
         await self.calibrate_motor()
